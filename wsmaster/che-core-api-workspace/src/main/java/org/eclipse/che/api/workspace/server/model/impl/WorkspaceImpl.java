@@ -22,7 +22,6 @@ import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
@@ -48,7 +47,9 @@ import static org.eclipse.che.api.core.model.workspace.WorkspaceStatus.STOPPED;
                 @NamedQuery(name = "Workspace.getByNamespace",
                             query = "SELECT w FROM Workspace w WHERE w.namespace = :namespace"),
                 @NamedQuery(name = "Workspace.getByName",
-                            query = "SELECT w FROM Workspace w WHERE w.namespace = :namespace AND w.name = :name")
+                            query = "SELECT w FROM Workspace w WHERE w.namespace = :namespace AND w.name = :name"),
+                @NamedQuery(name = "Workspace.getAll",
+                            query = "SELECT w FROM Workspace w")
         }
 )
 public class WorkspaceImpl implements Workspace {
@@ -67,7 +68,6 @@ public class WorkspaceImpl implements Workspace {
     private String name;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn
     private WorkspaceConfigImpl config;
 
     @ElementCollection

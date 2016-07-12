@@ -35,13 +35,13 @@ import static java.util.Objects.requireNonNull;
  * @author Yevhenii Voevodin
  */
 @Singleton
-@Transactional(rollbackOn = ApiException.class)
 public class JpaWorkspaceDao implements WorkspaceDao {
 
     @Inject
     private EntityManager manager;
 
     @Override
+    @Transactional(rollbackOn = ApiException.class)
     public WorkspaceImpl create(WorkspaceImpl workspace) throws ConflictException, ServerException {
         requireNonNull(workspace, "Required non-null workspace");
         try {
@@ -58,13 +58,23 @@ public class JpaWorkspaceDao implements WorkspaceDao {
     }
 
     @Override
+    @Transactional(rollbackOn = ApiException.class)
     public WorkspaceImpl update(WorkspaceImpl update) throws NotFoundException, ConflictException, ServerException {
         return null;
     }
 
     @Override
+    @Transactional(rollbackOn = ApiException.class)
     public void remove(String id) throws ConflictException, ServerException {
-
+        requireNonNull(id, "Required non-null id");
+        try {
+            final WorkspaceImpl workspace = manager.find(WorkspaceImpl.class, id);
+            if (workspace != null) {
+                manager.remove(workspace);
+            }
+        } catch (RuntimeException x) {
+            throw new ServerException(x.getLocalizedMessage(), x);
+        }
     }
 
     @Override
@@ -113,6 +123,11 @@ public class JpaWorkspaceDao implements WorkspaceDao {
 
     @Override
     public List<WorkspaceImpl> getWorkspaces(String userId) throws ServerException {
-        return null;
+        // TODO respect userId when workers become a part of che
+        try {
+            return manager.createNamedQuery("Workspace.getAll", WorkspaceImpl.class).getResultList();
+        } catch (RuntimeException x) {
+            throw new ServerException(x.getLocalizedMessage(), x);
+        }
     }
 }

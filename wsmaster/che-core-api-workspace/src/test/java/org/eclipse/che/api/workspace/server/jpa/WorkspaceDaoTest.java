@@ -34,9 +34,9 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.HashMap;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
@@ -84,7 +84,7 @@ public class WorkspaceDaoTest {
     }
 
     @Test(expectedExceptions = NotFoundException.class)
-    public void shouldThrowNotFoundExceptionWhenGettingNonExistingWorkspace() throws Exception {
+    public void shouldThrowNotFoundExceptionWhenGettingNonExistingWorkspaceById() throws Exception {
         workspaceDao.get("non-existing-id");
     }
 
@@ -153,7 +153,24 @@ public class WorkspaceDaoTest {
         workspaceDao.get(workspaces[0].getName(), null);
     }
 
+    @Test(expectedExceptions = NotFoundException.class,
+          dependsOnMethods = "shouldThrowNotFoundExceptionWhenGettingNonExistingWorkspaceById")
+    public void shouldRemoveWorkspace() throws Exception {
+        final WorkspaceImpl workspace = workspaces[0];
 
+        workspaceDao.remove(workspace.getId());
+        workspaceDao.get(workspace.getId());
+    }
+
+    @Test
+    public void shouldNotThrowExceptionWhenRemovingNonExistingWorkspace() throws Exception {
+        workspaceDao.remove("non-existing-id");
+    }
+
+    @Test(expectedExceptions = NullPointerException.class)
+    public void shouldThrowNpeWhenRemovingNull() throws Exception {
+        workspaceDao.remove(null);
+    }
 
     private static WorkspaceImpl createWorkspace(String id, String namespace, String name) {
         // Project Source configuration

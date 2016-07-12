@@ -21,6 +21,7 @@ import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -67,6 +68,7 @@ public class ProjectConfigImpl implements ProjectConfig {
     private List<String> mixins;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn
     @MapKey(name = "name")
     private Map<String, Attribute> dbAttributes;
 
@@ -176,7 +178,6 @@ public class ProjectConfigImpl implements ProjectConfig {
                && getMixins().equals(other.getMixins())
                && getAttributes().equals(other.getAttributes())
                && Objects.equals(source, other.getSource());
-               //&& Objects.equals(contentRoot, other.getContentRoot());
     }
 
     @Override
