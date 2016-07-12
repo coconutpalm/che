@@ -40,4 +40,11 @@ public interface Environment {
      * to investigate
      */
     List<? extends MachineConfig> getMachineConfigs();
+
+    /**
+     * Returns type of environment, e.g. compose, etc.
+     * It is mandatory and case insensitive.
+     */
+    // todo remove, use type from recipe instead
+    String getType();
 }

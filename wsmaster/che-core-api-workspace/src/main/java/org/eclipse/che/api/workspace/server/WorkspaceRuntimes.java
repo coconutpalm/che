@@ -12,54 +12,44 @@ package org.eclipse.che.api.workspace.server;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.Striped;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.machine.Machine;
-import org.eclipse.che.api.core.model.machine.MachineConfig;
-import org.eclipse.che.api.core.model.machine.MachineLogMessage;
-import org.eclipse.che.api.core.model.machine.MachineStatus;
+import org.eclipse.che.api.core.model.workspace.Environment;
 import org.eclipse.che.api.core.model.workspace.WorkspaceRuntime;
 import org.eclipse.che.api.core.model.workspace.WorkspaceStatus;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.core.notification.EventSubscriber;
-import org.eclipse.che.api.core.util.AbstractLineConsumer;
-import org.eclipse.che.api.core.util.LineConsumer;
-import org.eclipse.che.api.core.util.WebsocketMessageConsumer;
-import org.eclipse.che.api.machine.server.MachineManager;
-import org.eclipse.che.api.machine.server.exception.MachineException;
-import org.eclipse.che.api.machine.server.model.impl.MachineConfigImpl;
 import org.eclipse.che.api.machine.server.model.impl.MachineImpl;
-import org.eclipse.che.api.machine.server.model.impl.MachineLogMessageImpl;
 import org.eclipse.che.api.machine.shared.dto.event.MachineStatusEvent;
+import org.eclipse.che.api.workspace.server.env.spi.EnvironmentEngine;
 import org.eclipse.che.api.workspace.server.model.impl.EnvironmentImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceRuntimeImpl;
 import org.eclipse.che.api.workspace.shared.dto.event.WorkspaceStatusEvent;
 import org.eclipse.che.api.workspace.shared.dto.event.WorkspaceStatusEvent.EventType;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.IOException;
-import java.util.ArrayDeque;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Queue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
-import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
-import static org.eclipse.che.api.machine.shared.Constants.ENVIRONMENT_OUTPUT_CHANNEL_TEMPLATE;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Defines an internal API for managing {@link WorkspaceRuntimeImpl} instances.
@@ -84,7 +74,7 @@ import static org.eclipse.che.dto.server.DtoFactory.newDto;
 @Singleton
 public class WorkspaceRuntimes {
 
-    private static final Logger                 LOG     = LoggerFactory.getLogger(WorkspaceRuntimes.class);
+    private static final Logger                 LOG     = getLogger(WorkspaceRuntimes.class);
     // 16 - experimental value for stripes count, it comes from default hash map size
     private static final Striped<ReadWriteLock> STRIPED = Striped.readWriteLock(16);
 
@@ -207,7 +197,7 @@ public class WorkspaceRuntimes {
             }
 
             // Create a new runtime descriptor and save it with 'STARTING' status
-            final RuntimeDescriptor descriptor = new RuntimeDescriptor(new WorkspaceRuntimeImpl(envName));
+            final RuntimeDescriptor descriptor = new RuntimeDescriptor(new WorkspaceRuntimeImpl(envName, environmentCopy.getType()));
             descriptor.setRuntimeStatus(WorkspaceStatus.STARTING);
             descriptors.put(workspace.getId(), descriptor);
 

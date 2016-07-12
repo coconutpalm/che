@@ -33,9 +33,11 @@ public class EnvironmentImpl implements Environment {
     private String                  name;
     private RecipeImpl              recipe;
     private List<MachineConfigImpl> machineConfigs;
+    private String                  type;
 
-    public EnvironmentImpl(String name, Recipe recipe, List<? extends MachineConfig> machineConfigs) {
+    public EnvironmentImpl(String name, Recipe recipe, List<? extends MachineConfig> machineConfigs, String type) {
         this.name = name;
+        this.type = type;
         if (recipe != null) {
             this.recipe = new RecipeImpl(recipe);
         }
@@ -47,7 +49,7 @@ public class EnvironmentImpl implements Environment {
     }
 
     public EnvironmentImpl(Environment environment) {
-        this(environment.getName(), environment.getRecipe(), environment.getMachineConfigs());
+        this(environment.getName(), environment.getRecipe(), environment.getMachineConfigs(), environment.getType());
     }
 
     @Override
@@ -70,22 +72,24 @@ public class EnvironmentImpl implements Environment {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (!(obj instanceof EnvironmentImpl)) return false;
-        final EnvironmentImpl other = (EnvironmentImpl)obj;
-        return Objects.equals(name, other.name) &&
-               Objects.equals(recipe, other.recipe) &&
-               getMachineConfigs().equals(other.getMachineConfigs());
+    public String getType() {
+        return type;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof EnvironmentImpl)) return false;
+        EnvironmentImpl that = (EnvironmentImpl)o;
+        return Objects.equals(name, that.name) &&
+               Objects.equals(recipe, that.recipe) &&
+               Objects.equals(machineConfigs, that.machineConfigs) &&
+               Objects.equals(type, that.type);
     }
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = hash * 31 + Objects.hashCode(name);
-        hash = hash * 31 + Objects.hashCode(recipe);
-        hash = hash * 31 + getMachineConfigs().hashCode();
-        return hash;
+        return Objects.hash(name, recipe, machineConfigs, type);
     }
 
     @Override
@@ -94,6 +98,7 @@ public class EnvironmentImpl implements Environment {
                "name='" + name + '\'' +
                ", recipe=" + recipe +
                ", machineConfigs=" + machineConfigs +
+               ", type='" + type + '\'' +
                '}';
     }
 }

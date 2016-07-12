@@ -172,7 +172,10 @@ public class StackServiceTest {
                                                                                                  "someprotocol",
                                                                                                  "/some/path")),
                                                                 Collections.singletonMap("key1", "value1"));
-        EnvironmentImpl environment = new EnvironmentImpl(ENVIRONMENT_NAME, null, Collections.singletonList(machineConfig));
+        EnvironmentImpl environment = new EnvironmentImpl(ENVIRONMENT_NAME,
+                                                          null,
+                                                          Collections.singletonList(machineConfig),
+                                                          "env-type");
 
         WorkspaceConfigImpl workspaceConfig = WorkspaceConfigImpl.builder()
                                                                  .setName(WORKSPACE_CONFIG_NAME)

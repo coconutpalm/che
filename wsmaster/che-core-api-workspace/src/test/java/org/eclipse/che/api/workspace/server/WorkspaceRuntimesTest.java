@@ -736,7 +736,8 @@ public class WorkspaceRuntimesTest {
                                                              .build();
         final EnvironmentImpl environment = new EnvironmentImpl(ENV_NAME,
                                                                 new RecipeImpl(),
-                                                                asList(nonDevCfg, devCfg));
+                                                                asList(nonDevCfg, devCfg),
+                                                                "env-type");
         final WorkspaceConfigImpl wsConfig = WorkspaceConfigImpl.builder()
                                                                 .setName("test workspace")
                                                                 .setEnvironments(singletonList(environment))

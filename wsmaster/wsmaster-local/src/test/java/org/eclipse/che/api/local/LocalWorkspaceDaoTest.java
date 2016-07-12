@@ -124,8 +124,14 @@ public class LocalWorkspaceDaoTest {
                                                                                                      "/some/path")),
                                                                     Collections.singletonMap("key1", "value1"));
 
-        final EnvironmentImpl env1 = new EnvironmentImpl("my-environment", recipe, asList(machineCfg1, machineCfg2));
-        final EnvironmentImpl env2 = new EnvironmentImpl("my-environment-2", recipe, singletonList(machineCfg1));
+        final EnvironmentImpl env1 = new EnvironmentImpl("my-environment",
+                                                         recipe,
+                                                         asList(machineCfg1, machineCfg2),
+                                                         "env-type");
+        final EnvironmentImpl env2 = new EnvironmentImpl("my-environment-2",
+                                                         recipe,
+                                                         singletonList(machineCfg1),
+                                                         "env-type");
 
         final List<EnvironmentImpl> environments = new ArrayList<>();
         environments.add(env1);

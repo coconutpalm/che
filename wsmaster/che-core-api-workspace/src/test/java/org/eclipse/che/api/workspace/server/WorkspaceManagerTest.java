@@ -44,6 +44,7 @@ import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 import java.util.List;
+import java.util.Optional;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.Arrays.asList;
@@ -70,7 +71,7 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.Assert.assertTrue;
 
 /**
  * Covers main cases of {@link WorkspaceManager}.
@@ -407,7 +408,8 @@ public class WorkspaceManagerTest {
         final WorkspaceConfigImpl config = createConfig();
         final EnvironmentImpl nonDefaultEnv = new EnvironmentImpl("non-default-env",
                                                                   null,
-                                                                  config.getEnvironments().get(0).getMachineConfigs());
+                                                                  config.getEnvironments().get(0).getMachineConfigs(),
+                                                                  "env-type");
         config.getEnvironments().add(nonDefaultEnv);
         final WorkspaceImpl workspace = workspaceManager.createWorkspace(config, "user123", "account");
         when(workspaceDao.get(workspace.getId())).thenReturn(workspace);
@@ -653,15 +655,15 @@ public class WorkspaceManagerTest {
     }
 
     private RuntimeDescriptor createDescriptor(WorkspaceImpl workspace, WorkspaceStatus status) {
-        final WorkspaceRuntimeImpl runtime = new WorkspaceRuntimeImpl(workspace.getConfig().getDefaultEnv());
-        final String env = workspace.getConfig().getDefaultEnv();
-        for (MachineConfigImpl machineConfig : workspace.getConfig()
-                                                        .getEnvironment(workspace.getConfig().getDefaultEnv())
-                                                        .get()
-                                                        .getMachineConfigs()) {
+        Optional<EnvironmentImpl> environmentOpt = workspace.getConfig().getEnvironment(workspace.getConfig().getDefaultEnv());
+        assertTrue(environmentOpt.isPresent());
+        EnvironmentImpl environment = environmentOpt.get();
+
+        final WorkspaceRuntimeImpl runtime = new WorkspaceRuntimeImpl(environment.getName(), environment.getType());
+        for (MachineConfigImpl machineConfig : environment.getMachineConfigs()) {
             final MachineImpl machine = MachineImpl.builder()
                                                    .setConfig(machineConfig)
-                                                   .setEnvName(env)
+                                                   .setEnvName(environment.getName())
                                                    .setId(NameGenerator.generate("machine", 10))
                                                    .setOwner(workspace.getNamespace())
                                                    .setRuntime(new MachineRuntimeInfoImpl(emptyMap(), emptyMap(), emptyMap()))
@@ -697,7 +699,10 @@ public class WorkspaceManagerTest {
         return WorkspaceConfigImpl.builder()
                                   .setName("dev-workspace")
                                   .setDefaultEnv("dev-env")
-                                  .setEnvironments(singletonList(new EnvironmentImpl("dev-env", null, singletonList(devMachine))))
+                                  .setEnvironments(singletonList(new EnvironmentImpl("dev-env",
+                                                                                     null,
+                                                                                     singletonList(devMachine),
+                                                                                     "env-type")))
                                   .build();
     }
 }
