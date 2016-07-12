@@ -26,7 +26,9 @@ import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.PostLoad;
+import javax.persistence.PostUpdate;
 import javax.persistence.PrePersist;
+import javax.persistence.PreUpdate;
 import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -70,7 +72,7 @@ public class ProjectConfigImpl implements ProjectConfig {
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn
     @MapKey(name = "name")
-    private Map<String, Attribute> dbAttributes;
+    private Map<String, Attribute> dbAttributes = new HashMap<>();
 
     // Mapping delegated to 'dbAttributes' field
     // as it is impossible to map nested list directly
@@ -158,7 +160,7 @@ public class ProjectConfigImpl implements ProjectConfig {
     }
 
     @Override
-    public SourceStorage getSource() {
+    public SourceStorageImpl getSource() {
         return source;
     }
 
@@ -207,13 +209,15 @@ public class ProjectConfigImpl implements ProjectConfig {
     }
 
     @PrePersist
+    @PreUpdate
     private void prepareDBAttributes() {
-        dbAttributes = attributes.entrySet()
-                                 .stream()
-                                 .collect(toMap(Map.Entry::getKey, e -> new Attribute(e.getKey(), e.getValue())));
+        dbAttributes = getAttributes().entrySet()
+                                      .stream()
+                                      .collect(toMap(Map.Entry::getKey, e -> new Attribute(e.getKey(), e.getValue())));
     }
 
     @PostLoad
+    @PostUpdate
     private void initEntityAttributes() {
         attributes = dbAttributes.values()
                                  .stream()

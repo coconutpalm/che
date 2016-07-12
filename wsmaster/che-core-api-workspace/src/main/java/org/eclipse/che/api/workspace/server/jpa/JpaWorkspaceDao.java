@@ -12,7 +12,6 @@ package org.eclipse.che.api.workspace.server.jpa;
 
 import com.google.inject.persist.Transactional;
 
-import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
@@ -41,11 +40,10 @@ public class JpaWorkspaceDao implements WorkspaceDao {
     private EntityManager manager;
 
     @Override
-    @Transactional(rollbackOn = ApiException.class)
     public WorkspaceImpl create(WorkspaceImpl workspace) throws ConflictException, ServerException {
         requireNonNull(workspace, "Required non-null workspace");
         try {
-            manager.persist(workspace);
+            doCreate(workspace);
         } catch (DuplicateKeyException dkEx) {
             throw new ConflictException(format("Workspace with id '%s' or name '%s' in namespace '%s' already exists",
                                                workspace.getId(),
@@ -58,19 +56,27 @@ public class JpaWorkspaceDao implements WorkspaceDao {
     }
 
     @Override
-    @Transactional(rollbackOn = ApiException.class)
     public WorkspaceImpl update(WorkspaceImpl update) throws NotFoundException, ConflictException, ServerException {
-        return null;
+        requireNonNull(update, "Required non-null update");
+        try {
+            doUpdate(update);
+        } catch (DuplicateKeyException dkEx) {
+            throw new ConflictException(format("Workspace with name '%s' in namespace '%s' already exists",
+                                               update.getNamespace(),
+                                               update.getName()));
+        } catch (RuntimeException x) {
+            throw new ServerException(x.getMessage(), x);
+        }
+        return update;
     }
 
     @Override
-    @Transactional(rollbackOn = ApiException.class)
     public void remove(String id) throws ConflictException, ServerException {
         requireNonNull(id, "Required non-null id");
         try {
             final WorkspaceImpl workspace = manager.find(WorkspaceImpl.class, id);
             if (workspace != null) {
-                manager.remove(workspace);
+                doRemove(workspace);
             }
         } catch (RuntimeException x) {
             throw new ServerException(x.getLocalizedMessage(), x);
@@ -129,5 +135,22 @@ public class JpaWorkspaceDao implements WorkspaceDao {
         } catch (RuntimeException x) {
             throw new ServerException(x.getLocalizedMessage(), x);
         }
+    }
+
+    @Transactional
+    protected void doCreate(WorkspaceImpl workspace) {
+        manager.persist(workspace);
+    }
+
+    @Transactional
+    protected void doRemove(WorkspaceImpl workspace) {
+        manager.remove(workspace);
+    }
+
+//    @Transactional
+    protected void doUpdate(WorkspaceImpl workspace) {
+        manager.getTransaction().begin();
+        manager.merge(workspace);
+        manager.getTransaction().commit();
     }
 }
