@@ -94,6 +94,7 @@ import static org.eclipse.che.plugin.docker.machine.DockerInstance.LATEST_TAG;
  * @author andrew00x
  * @author Alexander Garagatyi
  * @author Roman Iuvshyn
+ * @author Mykola Morhun
  */
 @Singleton
 public class DockerInstanceProvider implements InstanceProvider {
@@ -110,19 +111,15 @@ public class DockerInstanceProvider implements InstanceProvider {
     public static final String DOCKER_IMAGE_TYPE = "image";
 
     /**
-     * prevent build / start machine on a node with maintenance status
-     */
-    public static final String MAINTENANCE_CONSTRAINT = "constraint:com.codenvy.node-state!=maintenance";
-
-    /**
      * Prefix of image repository, used to identify that the image is a machine saved to snapshot.
      */
     public static final String MACHINE_SNAPSHOT_PREFIX = "machine_snapshot_";
 
     private static final Pattern SNAPSHOT_LOCATION_PATTERN = Pattern.compile("(.+/)?" + MACHINE_SNAPSHOT_PREFIX + ".+");
 
-    private final DockerConnector                               docker;
-    private final UserSpecificDockerRegistryCredentialsProvider dockerCredentials;
+    protected final DockerConnector                               docker;
+    protected final UserSpecificDockerRegistryCredentialsProvider dockerCredentials;
+
     private final ExecutorService                               executor;
     private final DockerInstanceStopDetector                    dockerInstanceStopDetector;
     private final DockerContainerNameGenerator                  containerNameGenerator;
@@ -445,13 +442,7 @@ public class DockerInstanceProvider implements InstanceProvider {
                                               .withAuthConfigs(dockerCredentials.getCredentials())
                                               .withDoForcePull(doForcePullOnBuild)
                                               .withMemoryLimit(memoryLimit)
-                                              .withMemorySwapLimit(memorySwapLimit)
-                                              // don't build an image on a node with maintenance
-                                              // Here we obtain key and value of build arg from constraint string.
-                                              // It passed to docker build as environment variable and we should divide constraint condition
-                                              // into two parts. Separator between key(env var name) and value is equal sign.
-                                              .addBuildArg(MAINTENANCE_CONSTRAINT.substring(0,MAINTENANCE_CONSTRAINT.lastIndexOf('=')),
-                                                           MAINTENANCE_CONSTRAINT.substring(MAINTENANCE_CONSTRAINT.lastIndexOf('=') + 1)),
+                                              .withMemorySwapLimit(memorySwapLimit),
                               progressMonitor);
         } catch (IOException e) {
             throw new MachineException(e.getLocalizedMessage(), e);
@@ -582,7 +573,6 @@ public class DockerInstanceProvider implements InstanceProvider {
                 volumes = commonMachineSystemVolumes;
                 env = new ArrayList<>(commonMachineEnvVariables);
             }
-            env.add(MAINTENANCE_CONSTRAINT); // do not run new container on a node with maintenance
 
             final long machineMemory = machine.getConfig().getLimits().getRam() * 1024L * 1024L;
             final long machineMemorySwap = memorySwapMultiplier == -1 ? -1 : (long)(machineMemory * memorySwapMultiplier);

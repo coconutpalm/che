@@ -67,10 +67,8 @@ import java.util.stream.Collectors;
 import static java.util.Arrays.asList;
 import static org.eclipse.che.plugin.docker.machine.DockerInstanceProvider.DOCKER_FILE_TYPE;
 import static org.eclipse.che.plugin.docker.machine.DockerInstanceProvider.DOCKER_IMAGE_TYPE;
-import static org.eclipse.che.plugin.docker.machine.DockerInstanceProvider.MAINTENANCE_CONSTRAINT;
 import static org.eclipse.che.plugin.docker.machine.DockerInstanceProvider.MACHINE_SNAPSHOT_PREFIX;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -81,7 +79,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 @Listeners(MockitoTestNGListener.class)
@@ -1955,75 +1952,6 @@ public class DockerInstanceProviderTest {
                                                                        "=" +
                                                                        entry.getValue())
                                                          .collect(Collectors.toList())));
-    }
-
-    @Test
-    public void shouldAddMaintenanceConstraintWhenCreateContainer() throws Exception {
-        dockerInstanceProvider = new DockerInstanceProvider(dockerConnector,
-                                                            dockerConnectorConfiguration,
-                                                            credentialsReader,
-                                                            dockerMachineFactory,
-                                                            dockerInstanceStopDetector,
-                                                            containerNameGenerator,
-                                                            recipeRetriever,
-                                                            Collections.emptySet(),
-                                                            Collections.emptySet(),
-                                                            Collections.emptySet(),
-                                                            Collections.emptySet(),
-                                                            null,
-                                                            workspaceFolderPathProvider,
-                                                            PROJECT_FOLDER_PATH,
-                                                            false,
-                                                            false,
-                                                            Collections.emptySet(),
-                                                            Collections.emptySet(),
-                                                            SNAPSHOT_USE_REGISTRY,
-                                                            MEMORY_SWAP_MULTIPLIER);
-
-        createInstanceFromRecipe(getMachineBuilder().setConfig(getMachineConfigBuilder().setDev(true)
-                                                                                        .build())
-                                                    .build());
-        ArgumentCaptor<CreateContainerParams> argumentCaptor = ArgumentCaptor.forClass(CreateContainerParams.class);
-        verify(dockerConnector).createContainer(argumentCaptor.capture());
-        assertTrue(asList(argumentCaptor.getValue()
-                                        .getContainerConfig()
-                                        .getEnv())
-                           .contains(MAINTENANCE_CONSTRAINT));
-    }
-
-    @Test
-    public void shouldAddMaintenanceConstraintWhenBuildImage() throws Exception {
-        String CONSTRAINT_KEY = MAINTENANCE_CONSTRAINT.substring(0,MAINTENANCE_CONSTRAINT.lastIndexOf('='));
-        String CONSTRAINT_VALUE = MAINTENANCE_CONSTRAINT.substring(MAINTENANCE_CONSTRAINT.lastIndexOf('=') + 1);
-
-        dockerInstanceProvider = new DockerInstanceProvider(dockerConnector,
-                                                            dockerConnectorConfiguration,
-                                                            credentialsReader,
-                                                            dockerMachineFactory,
-                                                            dockerInstanceStopDetector,
-                                                            containerNameGenerator,
-                                                            recipeRetriever,
-                                                            Collections.emptySet(),
-                                                            Collections.emptySet(),
-                                                            Collections.emptySet(),
-                                                            Collections.emptySet(),
-                                                            null,
-                                                            workspaceFolderPathProvider,
-                                                            PROJECT_FOLDER_PATH,
-                                                            false,
-                                                            false,
-                                                            Collections.emptySet(),
-                                                            Collections.emptySet(),
-                                                            SNAPSHOT_USE_REGISTRY,
-                                                            MEMORY_SWAP_MULTIPLIER);
-
-        createInstanceFromRecipe(getMachineBuilder().setConfig(getMachineConfigBuilder().setDev(true)
-                                                                                        .build())
-                                                    .build());
-        ArgumentCaptor<BuildImageParams> argumentCaptor = ArgumentCaptor.forClass(BuildImageParams.class);
-        verify(dockerConnector).buildImage(argumentCaptor.capture(), anyObject());
-        assertNotNull(argumentCaptor.getValue().getBuildArgs().get(CONSTRAINT_KEY));
-        assertEquals(argumentCaptor.getValue().getBuildArgs().get(CONSTRAINT_KEY), CONSTRAINT_VALUE);
     }
 
     private void createInstanceFromRecipe() throws Exception {
